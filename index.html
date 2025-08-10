@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RF617 - Generative Art</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <h1>RF617</h1>
+      </header>
+
+      <main class="main">
+        <div class="canvas-container">
+          <div id="canvas-wrapper" class="canvas-wrapper">
+            <!-- p5.js canvas will be inserted here -->
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <label for="palette-size">Color Palette Size:</label>
+            <select id="palette-size">
+              <option value="5">5 colors</option>
+              <option value="7" selected>7 colors</option>
+              <option value="9">9 colors</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <button id="generate-btn" class="btn-primary">Generate Art</button>
+            <button id="export-btn" class="btn-secondary">Export</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

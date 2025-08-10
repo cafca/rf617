@@ -1,0 +1,1 @@
+- Don't insert attributions to Claude Code when committing
