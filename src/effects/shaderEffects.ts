@@ -39,12 +39,19 @@ export class ShaderEffects {
       const vertSource = `
         attribute vec3 aPosition;
         attribute vec2 aTexCoord;
+        uniform mat4 uProjectionMatrix;
+        uniform mat4 uModelViewMatrix;
         varying vec2 vTexCoord;
         
         void main() {
           vTexCoord = aTexCoord;
           vec4 positionVec4 = vec4(aPosition, 1.0);
-          gl_Position = positionVec4;
+          
+          // Use p5.js transformation matrices to properly convert from p5.js coordinate space
+          // (center-origin: -width/2 to width/2) to WebGL clip space (-1 to 1).
+          // Without these matrices, the shader would bypass p5.js coordinate system entirely,
+          // causing texture mapping and viewport issues.
+          gl_Position = uProjectionMatrix * uModelViewMatrix * positionVec4;
         }
       `;
 
@@ -56,10 +63,13 @@ export class ShaderEffects {
         varying vec2 vTexCoord;
 
         void main() {
+          // Flip the y coordinate to correct upside-down rendering
+          vec2 flippedCoord = vec2(vTexCoord.x, 1.0 - vTexCoord.y);
+
           // Offset the input coordinate with wave distortion
-          vec2 warpedCoord = vTexCoord;
-          warpedCoord.x += intensity * 0.05 * sin(vTexCoord.y * 10.0);
-          warpedCoord.y += intensity * 0.05 * sin(vTexCoord.x * 10.0);
+          vec2 warpedCoord = flippedCoord;
+          warpedCoord.x += intensity * 0.05 * sin(flippedCoord.y * 10.0);
+          warpedCoord.y += intensity * 0.05 * sin(flippedCoord.x * 10.0);
 
           // Set the new color by looking up the warped coordinate
           gl_FragColor = texture2D(tex0, warpedCoord);
@@ -77,15 +87,16 @@ export class ShaderEffects {
     // Clear the canvas and apply the wave distortion shader
     p.clear();
     p.shader(this.displacementShader);
-    this.displacementShader.setUniform('tex0', canvasTexture);
-    this.displacementShader.setUniform('intensity', intensity);
+    this.displacementShader
+      .setUniform('tex0', canvasTexture)
+      .setUniform('intensity', intensity);
 
-    // Draw fullscreen quad with explicit texture coordinates
+    // Draw fullscreen quad that covers the entire canvas
     p.push();
     p.noStroke();
     p.fill(255);
 
-    // Draw fullscreen plane at native resolution
+    // Use p.plane() which creates a proper fullscreen quad with correct texture coordinates
     p.plane(p.width, p.height);
 
     p.pop();
