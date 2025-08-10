@@ -15,6 +15,8 @@ export interface ShapeConfig {
   color: Color;
   opacity: number;
   size: number;
+  width?: number;
+  height?: number;
   rotation?: number;
   strokeWeight?: number;
 }
@@ -55,15 +57,37 @@ export class ShapeGenerator {
     const type = types[Math.floor(Math.random() * types.length)];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
+    // Create extreme dimensions
+    const baseSize = 20 + Math.random() * 120;
+    const extremeRatio = 0.1 + Math.random() * 0.3; // Very thin to very wide
+    const shouldBeExtreme = Math.random() > 0.3; // 70% chance for extreme shapes
+    
+    let shapeWidth = baseSize;
+    let shapeHeight = baseSize;
+    
+    if (shouldBeExtreme) {
+      if (Math.random() > 0.5) {
+        // Make extremely wide
+        shapeWidth = baseSize * (2 + Math.random() * 4); // 2x to 6x wider
+        shapeHeight = baseSize * extremeRatio; // Very thin height
+      } else {
+        // Make extremely tall
+        shapeHeight = baseSize * (2 + Math.random() * 4); // 2x to 6x taller
+        shapeWidth = baseSize * extremeRatio; // Very thin width
+      }
+    }
+
     return {
       type,
       x: Math.random() * width,
       y: Math.random() * height,
       color,
       opacity: 0.3 + Math.random() * 0.5,
-      size: 10 + Math.random() * 80,
+      size: baseSize,
+      width: shapeWidth,
+      height: shapeHeight,
       rotation: Math.random() * Math.PI * 2,
-      strokeWeight: 1 + Math.random() * 4,
+      strokeWeight: 1 + Math.random() * 6,
     };
   }
 
@@ -112,12 +136,12 @@ export class ShapeGenerator {
       p.strokeWeight(shape.strokeWeight || 2);
     }
 
-    p.ellipse(0, 0, shape.size, shape.size);
+    // Use extreme dimensions for "circles" - making them ovals
+    p.ellipse(0, 0, shape.width || shape.size, shape.height || shape.size);
   }
 
   private drawEllipse(p: p5, shape: ShapeConfig, color: p5.Color): void {
     const shouldFill = Math.random() > 0.5;
-    const aspectRatio = 0.5 + Math.random() * 1.5;
 
     if (shouldFill) {
       p.fill(color);
@@ -128,12 +152,14 @@ export class ShapeGenerator {
       p.strokeWeight(shape.strokeWeight || 2);
     }
 
-    p.ellipse(0, 0, shape.size, shape.size * aspectRatio);
+    // Use extreme width and height directly
+    p.ellipse(0, 0, shape.width || shape.size, shape.height || shape.size);
   }
 
   private drawTriangle(p: p5, shape: ShapeConfig, color: p5.Color): void {
     const shouldFill = Math.random() > 0.5;
-    const halfSize = shape.size / 2;
+    const width = shape.width || shape.size;
+    const height = shape.height || shape.size;
 
     if (shouldFill) {
       p.fill(color);
@@ -144,12 +170,16 @@ export class ShapeGenerator {
       p.strokeWeight(shape.strokeWeight || 2);
     }
 
+    // Create stretched triangles using extreme dimensions
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
+
     const x1 = 0;
-    const y1 = -halfSize;
-    const x2 = -halfSize * 0.866;
-    const y2 = halfSize * 0.5;
-    const x3 = halfSize * 0.866;
-    const y3 = halfSize * 0.5;
+    const y1 = -halfHeight;
+    const x2 = -halfWidth;
+    const y2 = halfHeight;
+    const x3 = halfWidth;
+    const y3 = halfHeight;
 
     p.triangle(x1, y1, x2, y2, x3, y3);
   }
@@ -158,16 +188,26 @@ export class ShapeGenerator {
     p.stroke(color);
     p.strokeWeight(shape.strokeWeight || 2);
 
-    const length = shape.size;
+    const width = shape.width || shape.size;
+    const height = shape.height || shape.size;
+    
+    // Use the larger dimension as length for more extreme lines
+    const length = Math.max(width, height);
+    const thickness = Math.min(width, height);
+    
+    // Make lines much thicker or longer based on extreme dimensions
+    const actualStrokeWeight = Math.max(shape.strokeWeight || 2, thickness * 0.1);
+    p.strokeWeight(actualStrokeWeight);
+
     const startX = -length / 2;
     const endX = length / 2;
 
     const curviness = Math.random();
     if (curviness > 0.7) {
       const controlX1 = startX + length * 0.25;
-      const controlY1 = (Math.random() - 0.5) * length * 0.5;
+      const controlY1 = (Math.random() - 0.5) * length * 0.3;
       const controlX2 = startX + length * 0.75;
-      const controlY2 = (Math.random() - 0.5) * length * 0.5;
+      const controlY2 = (Math.random() - 0.5) * length * 0.3;
 
       p.noFill();
       p.bezier(startX, 0, controlX1, controlY1, controlX2, controlY2, endX, 0);

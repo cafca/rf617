@@ -1,5 +1,5 @@
 import p5 from 'p5';
-import { ColorPalette, Color } from '../utils/colorPalette';
+import { ColorPalette, Color, PalettePattern } from '../utils/colorPalette';
 import { BackgroundGenerator } from '../generators/backgroundGenerator';
 import { ShapeGenerator, ShapeConfig } from '../generators/shapeGenerator';
 
@@ -25,13 +25,13 @@ export class GenerationPipeline {
     };
   }
 
-  generate(paletteSize: 5 | 7 | 9, elementCount: number = 15): void {
+  generate(paletteSize: 5 | 7 | 9, elementCount: number = 15, pattern: PalettePattern = PalettePattern.COMPLEMENTARY): void {
     if (this.state.isGenerating) return;
 
     this.state.isGenerating = true;
 
     try {
-      this.executeStages(paletteSize, elementCount);
+      this.executeStages(paletteSize, elementCount, pattern);
     } catch (error) {
       console.error('Generation failed:', error);
     } finally {
@@ -39,10 +39,10 @@ export class GenerationPipeline {
     }
   }
 
-  private executeStages(paletteSize: 5 | 7 | 9, elementCount: number): void {
+  private executeStages(paletteSize: 5 | 7 | 9, elementCount: number, pattern: PalettePattern): void {
     this.p.clear();
 
-    this.state.colors = this.colorPalette.generate(paletteSize);
+    this.state.colors = this.colorPalette.generate(paletteSize, pattern);
 
     this.backgroundGenerator.generate(
       this.p,
