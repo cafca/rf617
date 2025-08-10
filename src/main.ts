@@ -3,6 +3,7 @@ import { ColorPalette, Color, PalettePattern } from './utils/colorPalette';
 import { BackgroundGenerator } from './generators/backgroundGenerator';
 import { ShapeGenerator } from './generators/shapeGenerator';
 import { GenerationPipeline } from './core/generationPipeline';
+import { EffectType } from './effects/simpleEffects';
 
 // Render at half resolution for performance
 const CANVAS_WIDTH = 200;
@@ -12,6 +13,7 @@ let pipeline: GenerationPipeline;
 let currentPaletteSize = 7;
 let currentElementCount = 1;
 let currentPalettePattern = PalettePattern.COMPLEMENTARY;
+let currentEffect = EffectType.OFF;
 let paletteCanvas: p5;
 
 const sketch = (p: p5) => {
@@ -43,6 +45,7 @@ const sketch = (p: p5) => {
 
     setupPaletteCanvas().then(() => {
       setupEventListeners();
+      updateLabels();
       generateArt();
     });
   };
@@ -52,7 +55,8 @@ function generateArt() {
   pipeline.generate(
     currentPaletteSize as 5 | 7 | 9,
     currentElementCount,
-    currentPalettePattern
+    currentPalettePattern,
+    currentEffect
   );
   updatePaletteDisplay();
 }
@@ -70,6 +74,7 @@ function setupEventListeners() {
   const patternOptions = document.querySelectorAll('[data-pattern]');
   const colorOptions = document.querySelectorAll('[data-size]');
   const elementOptions = document.querySelectorAll('[data-elements]');
+  const effectOptions = document.querySelectorAll('[data-effect]');
 
   generateBtn?.addEventListener('click', generateArt);
 
@@ -151,26 +156,56 @@ function setupEventListeners() {
     });
   });
 
-  function updateLabels() {
-    const patternLabel = document.querySelector(
-      '.options-section:first-of-type .option-label'
-    );
-    const colorLabel = document.querySelector(
-      '.options-section:nth-of-type(2) .option-label'
-    );
-    const elementLabel = document.querySelector(
-      '.options-section:nth-of-type(3) .option-label'
-    );
+  // Effect option event listeners
+  effectOptions.forEach((option) => {
+    option.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const effect = target.dataset.effect as EffectType;
 
-    if (patternLabel) {
-      patternLabel.textContent = currentPalettePattern;
-    }
-    if (colorLabel) {
-      colorLabel.textContent = `${currentPaletteSize} colors`;
-    }
-    if (elementLabel) {
-      elementLabel.textContent = `${currentElementCount} element${currentElementCount > 1 ? 's' : ''}`;
-    }
+      // Update active state and button text
+      effectOptions.forEach((opt) => {
+        opt.classList.remove('active');
+        const optEffect = opt.getAttribute('data-effect');
+        (opt as HTMLElement).textContent = optEffect || 'off';
+      });
+      target.classList.add('active');
+      target.textContent = `[${effect}]`;
+
+      // Update current effect and label
+      currentEffect = effect;
+      updateLabels();
+
+      // Auto-regenerate
+      generateArt();
+    });
+  });
+}
+
+function updateLabels() {
+  const patternLabel = document.querySelector(
+    '.options-section:first-of-type .option-label'
+  );
+  const colorLabel = document.querySelector(
+    '.options-section:nth-of-type(2) .option-label'
+  );
+  const elementLabel = document.querySelector(
+    '.options-section:nth-of-type(3) .option-label'
+  );
+  const effectLabel = document.querySelector(
+    '.options-section:nth-of-type(4) .option-label'
+  );
+
+  if (patternLabel) {
+    patternLabel.textContent = currentPalettePattern;
+  }
+  if (colorLabel) {
+    colorLabel.textContent = `${currentPaletteSize} colors`;
+  }
+  if (elementLabel) {
+    elementLabel.textContent = `${currentElementCount} element${currentElementCount > 1 ? 's' : ''}`;
+  }
+  if (effectLabel) {
+    effectLabel.textContent = currentEffect;
   }
 }
 
@@ -199,7 +234,10 @@ function drawPalette(colors: Color[]) {
   }
 
   // Check if the canvas is ready
-  if (!('_renderer' in paletteCanvas) || !(paletteCanvas as { _renderer: unknown })._renderer) {
+  if (
+    !('_renderer' in paletteCanvas) ||
+    !(paletteCanvas as { _renderer: unknown })._renderer
+  ) {
     return;
   }
 
