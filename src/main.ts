@@ -10,8 +10,8 @@ const CANVAS_HEIGHT = 250;
 
 let pipeline: GenerationPipeline;
 let currentPaletteSize = 7;
-let currentElementCount = 3;
-let currentPalettePattern = PalettePattern.ANALOGOUS;
+let currentElementCount = 1;
+let currentPalettePattern = PalettePattern.COMPLEMENTARY;
 let paletteCanvas: p5;
 
 const sketch = (p: p5) => {
@@ -41,9 +41,10 @@ const sketch = (p: p5) => {
       shapeGenerator
     );
 
-    generateArt();
-    setupEventListeners();
-    setupPaletteCanvas();
+    setupPaletteCanvas().then(() => {
+      setupEventListeners();
+      generateArt();
+    });
   };
 };
 
@@ -130,12 +131,12 @@ function setupEventListeners() {
   elementOptions.forEach((option) => {
     option.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
-      const elements = parseInt(target.dataset.elements || '3');
+      const elements = parseInt(target.dataset.elements || '1');
 
       // Update active state and button text
       elementOptions.forEach((opt) => {
         opt.classList.remove('active');
-        const optElements = parseInt(opt.getAttribute('data-elements') || '3');
+        const optElements = parseInt(opt.getAttribute('data-elements') || '1');
         (opt as HTMLElement).textContent = `${optElements}`;
       });
       target.classList.add('active');
@@ -168,29 +169,39 @@ function setupEventListeners() {
       colorLabel.textContent = `${currentPaletteSize} colors`;
     }
     if (elementLabel) {
-      elementLabel.textContent = `${currentElementCount} elements`;
+      elementLabel.textContent = `${currentElementCount} element${currentElementCount > 1 ? 's' : ''}`;
     }
   }
 }
 
 function setupPaletteCanvas() {
-  const paletteSketch = (p: p5) => {
-    p.setup = () => {
-      p.pixelDensity(1);
-      const canvas = p.createCanvas(90, 12);
-      const wrapper = document.getElementById('palette-canvas-wrapper');
-      if (wrapper) {
-        canvas.parent(wrapper);
-      }
-      p.noLoop(); // Static canvas, will redraw manually
+  return new Promise<void>((resolve) => {
+    const paletteSketch = (p: p5) => {
+      p.setup = () => {
+        p.pixelDensity(1);
+        const canvas = p.createCanvas(90, 12);
+        const wrapper = document.getElementById('palette-canvas-wrapper');
+        if (wrapper) {
+          canvas.parent(wrapper);
+        }
+        p.noLoop(); // Static canvas, will redraw manually
+        resolve(); // Signal that setup is complete
+      };
     };
-  };
 
-  paletteCanvas = new p5(paletteSketch);
+    paletteCanvas = new p5(paletteSketch);
+  });
 }
 
 function drawPalette(colors: Color[]) {
-  if (!paletteCanvas || !colors.length) return;
+  if (!paletteCanvas || !colors.length) {
+    return;
+  }
+
+  // Check if the canvas is ready
+  if (!('_renderer' in paletteCanvas) || !(paletteCanvas as { _renderer: unknown })._renderer) {
+    return;
+  }
 
   paletteCanvas.clear();
   const squareWidth = paletteCanvas.width / colors.length;
@@ -224,17 +235,17 @@ function rgbToHsl(
   g /= 255;
   b /= 255;
 
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
+  const maxVal = Math.max(r, g, b);
+  const minVal = Math.min(r, g, b);
   let h = 0;
   let s = 0;
-  const l = (max + min) / 2;
+  const l = (maxVal + minVal) / 2;
 
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  if (maxVal !== minVal) {
+    const d = maxVal - minVal;
+    s = l > 0.5 ? d / (2 - maxVal - minVal) : d / (maxVal + minVal);
 
-    switch (max) {
+    switch (maxVal) {
       case r:
         h = (g - b) / d + (g < b ? 6 : 0);
         break;
