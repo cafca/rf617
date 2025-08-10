@@ -36,14 +36,21 @@ export class GenerationPipeline {
     paletteSize: 5 | 7 | 9,
     elementCount: number = 15,
     pattern: PalettePattern = PalettePattern.COMPLEMENTARY,
-    effect: EffectType = EffectType.OFF
+    effect: EffectType = EffectType.OFF,
+    normalType: 'checker' | 'perlin' = 'checker'
   ): void {
     if (this.state.isGenerating) return;
 
     this.state.isGenerating = true;
 
     try {
-      this.executeStages(paletteSize, elementCount, pattern, effect);
+      this.executeStages(
+        paletteSize,
+        elementCount,
+        pattern,
+        effect,
+        normalType
+      );
     } catch (error) {
       console.error('Generation failed:', error);
     } finally {
@@ -55,7 +62,8 @@ export class GenerationPipeline {
     paletteSize: 5 | 7 | 9,
     elementCount: number,
     pattern: PalettePattern,
-    effect: EffectType
+    effect: EffectType,
+    normalType: 'checker' | 'perlin' = 'checker'
   ): void {
     this.p.clear();
 
@@ -83,6 +91,7 @@ export class GenerationPipeline {
       const effectConfig: EffectConfig = {
         type: effect,
         intensity: 1,
+        normalType: normalType,
       };
       this.effects.apply(this.p, effectConfig);
     }

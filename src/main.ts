@@ -13,7 +13,8 @@ let pipeline: GenerationPipeline;
 let currentPaletteSize = 7;
 let currentElementCount = 1;
 let currentPalettePattern = PalettePattern.COMPLEMENTARY;
-let currentEffect = EffectType.WAVES;
+let currentEffect = EffectType.DISPLACEMENT;
+let currentNormalType = 'checker'; // 'checker' or 'perlin'
 let paletteCanvas: p5;
 
 const sketch = (p: p5) => {
@@ -55,7 +56,8 @@ function generateArt() {
     currentPaletteSize as 5 | 7 | 9,
     currentElementCount,
     currentPalettePattern,
-    currentEffect
+    currentEffect,
+    currentNormalType as 'checker' | 'perlin'
   );
   updatePaletteDisplay();
 }
@@ -74,6 +76,7 @@ function setupEventListeners() {
   const colorOptions = document.querySelectorAll('[data-size]');
   const elementOptions = document.querySelectorAll('[data-elements]');
   const effectOptions = document.querySelectorAll('[data-effect]');
+  const normalOptions = document.querySelectorAll('[data-normal]');
 
   generateBtn?.addEventListener('click', generateArt);
 
@@ -155,6 +158,26 @@ function setupEventListeners() {
 
       // Update current effect
       currentEffect = effect;
+
+      // Auto-regenerate
+      generateArt();
+    });
+  });
+
+  // Normal option event listeners
+  normalOptions.forEach((option) => {
+    option.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const normal = target.dataset.normal as 'checker' | 'perlin';
+
+      // Update active state
+      normalOptions.forEach((opt) => {
+        opt.classList.remove('active');
+      });
+      target.classList.add('active');
+
+      // Update current normal type
+      currentNormalType = normal;
 
       // Auto-regenerate
       generateArt();
