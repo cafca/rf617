@@ -112,6 +112,7 @@ test.describe('RF617 Browser Error Detection', () => {
     const effectButtons = [
       '[data-effect="off"]',
       '[data-effect="blur"]',
+      '[data-effect="waves"]',
       '[data-effect="displacement"]',
     ];
 

@@ -13,7 +13,7 @@ let pipeline: GenerationPipeline;
 let currentPaletteSize = 7;
 let currentElementCount = 1;
 let currentPalettePattern = PalettePattern.COMPLEMENTARY;
-let currentEffect = EffectType.DISPLACEMENT;
+let currentEffect = EffectType.WAVES;
 let paletteCanvas: p5;
 
 const sketch = (p: p5) => {
