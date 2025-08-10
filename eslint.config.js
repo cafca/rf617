@@ -6,9 +6,9 @@ import prettierPlugin from 'eslint-plugin-prettier';
 export default [
   {
     ignores: [
-      'node_modules',
-      'dist',
-      'build',
+      'node_modules/**/*',
+      'dist/**/*',
+      'build/**/*',
       '*.js.map',
       '*.d.ts',
       '.eslintrc.json',
