@@ -40,8 +40,8 @@ describe('GenerationPipeline', () => {
   });
 
   describe('generate', () => {
-    it('should execute all generation stages in order', async () => {
-      await pipeline.generate(7);
+    it('should execute all generation stages in order', () => {
+      pipeline.generate(7);
 
       expect(backgroundGenerator.generate).toHaveBeenCalledWith(
         mockP5,
@@ -66,8 +66,8 @@ describe('GenerationPipeline', () => {
       );
     });
 
-    it('should update state with generated colors and shapes', async () => {
-      await pipeline.generate(5);
+    it('should update state with generated colors and shapes', () => {
+      pipeline.generate(5);
       const state = pipeline.getState();
 
       expect(state.colors).toHaveLength(5);
@@ -76,11 +76,9 @@ describe('GenerationPipeline', () => {
       expect(state.isGenerating).toBe(false);
     });
 
-    it('should not start new generation if already generating', async () => {
-      const promise1 = pipeline.generate(7);
-      const promise2 = pipeline.generate(7);
-
-      await Promise.all([promise1, promise2]);
+    it('should not start new generation if already generating', () => {
+      pipeline.generate(7);
+      pipeline.generate(7);
 
       expect(backgroundGenerator.generate).toHaveBeenCalledTimes(1);
     });
@@ -108,8 +106,8 @@ describe('GenerationPipeline', () => {
   });
 
   describe('getCurrentColors', () => {
-    it('should return current colors array', async () => {
-      await pipeline.generate(7);
+    it('should return current colors array', () => {
+      pipeline.generate(7);
       const colors = pipeline.getCurrentColors();
 
       expect(colors).toHaveLength(7);

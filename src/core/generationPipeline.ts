@@ -32,13 +32,13 @@ export class GenerationPipeline {
     };
   }
 
-  async generate(paletteSize: 5 | 7 | 9): Promise<void> {
+  generate(paletteSize: 5 | 7 | 9): void {
     if (this.state.isGenerating) return;
 
     this.state.isGenerating = true;
 
     try {
-      await this.executeStages(paletteSize);
+      this.executeStages(paletteSize);
     } catch (error) {
       console.error('Generation failed:', error);
     } finally {
@@ -46,12 +46,11 @@ export class GenerationPipeline {
     }
   }
 
-  private async executeStages(paletteSize: 5 | 7 | 9): Promise<void> {
+  private executeStages(paletteSize: 5 | 7 | 9): void {
     this.p.clear();
 
     this.state.colors = this.colorPalette.generate(paletteSize);
 
-    await this.stageDelay(100);
     this.backgroundGenerator.generate(
       this.p,
       this.state.colors,
@@ -59,7 +58,6 @@ export class GenerationPipeline {
       this.p.height
     );
 
-    await this.stageDelay(200);
     this.state.shapes = this.shapeGenerator.generate(
       this.p,
       this.state.colors,
@@ -70,13 +68,8 @@ export class GenerationPipeline {
 
     this.shapeGenerator.drawShapes(this.p, this.state.shapes);
 
-    await this.stageDelay(300);
     this.state.distortionConfig = this.distortionEffects.createRandomConfig();
     this.distortionEffects.apply(this.p, this.state.distortionConfig);
-  }
-
-  private async stageDelay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   exportImage(): void {
