@@ -3,7 +3,6 @@ import { GenerationPipeline } from '../src/core/generationPipeline';
 import { ColorPalette } from '../src/utils/colorPalette';
 import { BackgroundGenerator } from '../src/generators/backgroundGenerator';
 import { ShapeGenerator } from '../src/generators/shapeGenerator';
-import { DistortionEffects } from '../src/effects/distortionEffects';
 
 const mockP5 = {
   width: 400,
@@ -17,25 +16,21 @@ describe('GenerationPipeline', () => {
   let colorPalette: ColorPalette;
   let backgroundGenerator: BackgroundGenerator;
   let shapeGenerator: ShapeGenerator;
-  let distortionEffects: DistortionEffects;
 
   beforeEach(() => {
     colorPalette = new ColorPalette();
     backgroundGenerator = new BackgroundGenerator();
     shapeGenerator = new ShapeGenerator();
-    distortionEffects = new DistortionEffects();
 
     vi.spyOn(backgroundGenerator, 'generate');
     vi.spyOn(shapeGenerator, 'generate');
     vi.spyOn(shapeGenerator, 'drawShapes');
-    vi.spyOn(distortionEffects, 'apply');
 
     pipeline = new GenerationPipeline(
       mockP5,
       colorPalette,
       backgroundGenerator,
-      shapeGenerator,
-      distortionEffects
+      shapeGenerator
     );
   });
 
@@ -60,10 +55,6 @@ describe('GenerationPipeline', () => {
         mockP5,
         expect.any(Array)
       );
-      expect(distortionEffects.apply).toHaveBeenCalledWith(
-        mockP5,
-        expect.any(Object)
-      );
     });
 
     it('should update state with generated colors and shapes', () => {
@@ -72,7 +63,6 @@ describe('GenerationPipeline', () => {
 
       expect(state.colors).toHaveLength(5);
       expect(state.shapes.length).toBeGreaterThan(0);
-      expect(state.distortionConfig).toBeDefined();
       expect(state.isGenerating).toBe(false);
     });
 
@@ -100,7 +90,6 @@ describe('GenerationPipeline', () => {
 
       expect(state).toHaveProperty('colors');
       expect(state).toHaveProperty('shapes');
-      expect(state).toHaveProperty('distortionConfig');
       expect(state).toHaveProperty('isGenerating');
     });
   });

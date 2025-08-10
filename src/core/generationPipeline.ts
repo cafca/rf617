@@ -2,15 +2,10 @@ import p5 from 'p5';
 import { ColorPalette, Color } from '../utils/colorPalette';
 import { BackgroundGenerator } from '../generators/backgroundGenerator';
 import { ShapeGenerator, ShapeConfig } from '../generators/shapeGenerator';
-import {
-  DistortionEffects,
-  DistortionConfig,
-} from '../effects/distortionEffects';
 
 export interface GenerationState {
   colors: Color[];
   shapes: ShapeConfig[];
-  distortionConfig: DistortionConfig;
   isGenerating: boolean;
 }
 
@@ -21,13 +16,11 @@ export class GenerationPipeline {
     private p: p5,
     private colorPalette: ColorPalette,
     private backgroundGenerator: BackgroundGenerator,
-    private shapeGenerator: ShapeGenerator,
-    private distortionEffects: DistortionEffects
+    private shapeGenerator: ShapeGenerator
   ) {
     this.state = {
       colors: [],
       shapes: [],
-      distortionConfig: this.distortionEffects.createRandomConfig(),
       isGenerating: false,
     };
   }
@@ -67,9 +60,6 @@ export class GenerationPipeline {
     );
 
     this.shapeGenerator.drawShapes(this.p, this.state.shapes);
-
-    this.state.distortionConfig = this.distortionEffects.createRandomConfig();
-    this.distortionEffects.apply(this.p, this.state.distortionConfig);
   }
 
   exportImage(): void {
