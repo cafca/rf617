@@ -10,6 +10,7 @@ const CANVAS_HEIGHT = 250;
 
 let pipeline: GenerationPipeline;
 let currentPaletteSize = 7;
+let currentElementCount = 3;
 
 const sketch = (p: p5) => {
   p.setup = () => {
@@ -44,15 +45,15 @@ const sketch = (p: p5) => {
 };
 
 function generateArt() {
-  pipeline.generate(currentPaletteSize as 5 | 7 | 9);
+  pipeline.generate(currentPaletteSize as 5 | 7 | 9, currentElementCount);
 }
 
 function setupEventListeners() {
   const generateBtn = document.getElementById('generate-btn');
   const exportBtn = document.getElementById('export-btn');
-  const paletteSizeSelect = document.getElementById(
-    'palette-size'
-  ) as HTMLSelectElement;
+  const colorSliderOptions = document.querySelectorAll('.color-slider .slider-option');
+  const elementsSliderOptions = document.querySelectorAll('.elements-slider .slider-option');
+  const currentOptionsDisplay = document.getElementById('current-options');
 
   generateBtn?.addEventListener('click', generateArt);
 
@@ -60,10 +61,49 @@ function setupEventListeners() {
     pipeline.exportImage();
   });
 
-  paletteSizeSelect?.addEventListener('change', (e) => {
-    const target = e.target as HTMLSelectElement;
-    currentPaletteSize = parseInt(target.value);
+  // Color slider event listeners
+  colorSliderOptions.forEach((option) => {
+    option.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const size = parseInt(target.dataset.size || '7');
+      
+      // Update active state for color slider
+      colorSliderOptions.forEach(opt => opt.classList.remove('active'));
+      target.classList.add('active');
+      
+      // Update current palette size
+      currentPaletteSize = size;
+      updateOptionsDisplay();
+      
+      // Auto-regenerate
+      generateArt();
+    });
   });
+
+  // Elements slider event listeners
+  elementsSliderOptions.forEach((option) => {
+    option.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const elements = parseInt(target.dataset.elements || '3');
+      
+      // Update active state for elements slider
+      elementsSliderOptions.forEach(opt => opt.classList.remove('active'));
+      target.classList.add('active');
+      
+      // Update current element count
+      currentElementCount = elements;
+      updateOptionsDisplay();
+      
+      // Auto-regenerate
+      generateArt();
+    });
+  });
+
+  function updateOptionsDisplay() {
+    if (currentOptionsDisplay) {
+      currentOptionsDisplay.textContent = `${currentPaletteSize} colors, ${currentElementCount} elements`;
+    }
+  }
 }
 
 new p5(sketch);

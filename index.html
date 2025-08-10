@@ -8,30 +8,28 @@
   </head>
   <body>
     <div class="app">
-      <header class="header">
-        <h1>RF617</h1>
-      </header>
+      <div class="controls-panel">
+        <div id="current-options">7 colors, 3 elements</div>
+        <div class="color-slider">
+          <div class="slider-option" data-size="5">5</div>
+          <div class="slider-option active" data-size="7">7</div>
+          <div class="slider-option" data-size="9">9</div>
+        </div>
+        <div class="elements-slider">
+          <div class="slider-option" data-elements="1">1</div>
+          <div class="slider-option active" data-elements="3">3</div>
+          <div class="slider-option" data-elements="5">5</div>
+        </div>
+        <div class="action-buttons">
+          <button id="generate-btn">Generate</button>
+          <button id="export-btn">Export</button>
+        </div>
+      </div>
 
       <main class="main">
         <div class="canvas-container">
           <div id="canvas-wrapper" class="canvas-wrapper">
             <!-- p5.js canvas will be inserted here -->
-          </div>
-        </div>
-
-        <div class="controls">
-          <div class="control-group">
-            <label for="palette-size">Color Palette Size:</label>
-            <select id="palette-size">
-              <option value="5">5 colors</option>
-              <option value="7" selected>7 colors</option>
-              <option value="9">9 colors</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <button id="generate-btn" class="btn-primary">Generate Art</button>
-            <button id="export-btn" class="btn-secondary">Export</button>
           </div>
         </div>
       </main>

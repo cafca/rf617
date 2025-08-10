@@ -25,13 +25,13 @@ export class GenerationPipeline {
     };
   }
 
-  generate(paletteSize: 5 | 7 | 9): void {
+  generate(paletteSize: 5 | 7 | 9, elementCount: number = 15): void {
     if (this.state.isGenerating) return;
 
     this.state.isGenerating = true;
 
     try {
-      this.executeStages(paletteSize);
+      this.executeStages(paletteSize, elementCount);
     } catch (error) {
       console.error('Generation failed:', error);
     } finally {
@@ -39,7 +39,7 @@ export class GenerationPipeline {
     }
   }
 
-  private executeStages(paletteSize: 5 | 7 | 9): void {
+  private executeStages(paletteSize: 5 | 7 | 9, elementCount: number): void {
     this.p.clear();
 
     this.state.colors = this.colorPalette.generate(paletteSize);
@@ -56,7 +56,7 @@ export class GenerationPipeline {
       this.state.colors,
       this.p.width,
       this.p.height,
-      12 + Math.floor(Math.random() * 8)
+      elementCount
     );
 
     this.shapeGenerator.drawShapes(this.p, this.state.shapes);
