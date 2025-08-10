@@ -50,13 +50,6 @@ body {
   gap: 0.25rem;
 }
 
-.option-label {
-  font-size: 0.75rem;
-  color: #666;
-  font-weight: 500;
-  font-family: monospace;
-}
-
 .option-buttons {
   display: flex;
   gap: 0.25rem;
@@ -81,6 +74,13 @@ body {
 .option-btn.active {
   color: #333;
   font-weight: bold;
+}
+
+.option-suffix {
+  margin-left: 8px;
+  color: #666;
+  font-size: 12px;
+  font-family: monospace;
 }
 
 .action-buttons {

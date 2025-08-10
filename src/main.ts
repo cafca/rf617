@@ -45,7 +45,6 @@ const sketch = (p: p5) => {
 
     setupPaletteCanvas().then(() => {
       setupEventListeners();
-      updateLabels();
       generateArt();
     });
   };
@@ -88,20 +87,14 @@ function setupEventListeners() {
       const target = e.target as HTMLElement;
       const pattern = target.dataset.pattern as PalettePattern;
 
-      // Update active state and button text
+      // Update active state
       patternOptions.forEach((opt) => {
         opt.classList.remove('active');
-        const optPattern = opt.getAttribute('data-pattern');
-        const shortName = optPattern?.substring(0, 3) || 'com';
-        (opt as HTMLElement).textContent = shortName;
       });
       target.classList.add('active');
-      const shortName = pattern.substring(0, 3);
-      target.textContent = `[${shortName}]`;
 
-      // Update current pattern and label
+      // Update current pattern
       currentPalettePattern = pattern;
-      updateLabels();
 
       // Auto-regenerate
       generateArt();
@@ -114,18 +107,14 @@ function setupEventListeners() {
       const target = e.target as HTMLElement;
       const size = parseInt(target.dataset.size || '7');
 
-      // Update active state and button text
+      // Update active state
       colorOptions.forEach((opt) => {
         opt.classList.remove('active');
-        const optSize = parseInt(opt.getAttribute('data-size') || '7');
-        (opt as HTMLElement).textContent = `${optSize}`;
       });
       target.classList.add('active');
-      target.textContent = `[${size}]`;
 
-      // Update current palette size and label
+      // Update current palette size
       currentPaletteSize = size;
-      updateLabels();
 
       // Auto-regenerate
       generateArt();
@@ -138,18 +127,14 @@ function setupEventListeners() {
       const target = e.target as HTMLElement;
       const elements = parseInt(target.dataset.elements || '1');
 
-      // Update active state and button text
+      // Update active state
       elementOptions.forEach((opt) => {
         opt.classList.remove('active');
-        const optElements = parseInt(opt.getAttribute('data-elements') || '1');
-        (opt as HTMLElement).textContent = `${optElements}`;
       });
       target.classList.add('active');
-      target.textContent = `[${elements}]`;
 
-      // Update current element count and label
+      // Update current element count
       currentElementCount = elements;
-      updateLabels();
 
       // Auto-regenerate
       generateArt();
@@ -162,51 +147,19 @@ function setupEventListeners() {
       const target = e.target as HTMLElement;
       const effect = target.dataset.effect as EffectType;
 
-      // Update active state and button text
+      // Update active state
       effectOptions.forEach((opt) => {
         opt.classList.remove('active');
-        const optEffect = opt.getAttribute('data-effect');
-        (opt as HTMLElement).textContent = optEffect || 'off';
       });
       target.classList.add('active');
-      target.textContent = `[${effect}]`;
 
-      // Update current effect and label
+      // Update current effect
       currentEffect = effect;
-      updateLabels();
 
       // Auto-regenerate
       generateArt();
     });
   });
-}
-
-function updateLabels() {
-  const patternLabel = document.querySelector(
-    '.options-section:first-of-type .option-label'
-  );
-  const colorLabel = document.querySelector(
-    '.options-section:nth-of-type(2) .option-label'
-  );
-  const elementLabel = document.querySelector(
-    '.options-section:nth-of-type(3) .option-label'
-  );
-  const effectLabel = document.querySelector(
-    '.options-section:nth-of-type(4) .option-label'
-  );
-
-  if (patternLabel) {
-    patternLabel.textContent = currentPalettePattern;
-  }
-  if (colorLabel) {
-    colorLabel.textContent = `${currentPaletteSize} colors`;
-  }
-  if (elementLabel) {
-    elementLabel.textContent = `${currentElementCount} element${currentElementCount > 1 ? 's' : ''}`;
-  }
-  if (effectLabel) {
-    effectLabel.textContent = currentEffect;
-  }
 }
 
 function setupPaletteCanvas() {
