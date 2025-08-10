@@ -48,7 +48,11 @@ const sketch = (p: p5) => {
 };
 
 function generateArt() {
-  pipeline.generate(currentPaletteSize as 5 | 7 | 9, currentElementCount, currentPalettePattern);
+  pipeline.generate(
+    currentPaletteSize as 5 | 7 | 9,
+    currentElementCount,
+    currentPalettePattern
+  );
   updatePaletteDisplay();
 }
 

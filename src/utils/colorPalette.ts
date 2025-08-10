@@ -8,13 +8,16 @@ export interface Color {
 export enum PalettePattern {
   COMPLEMENTARY = 'complementary',
   ANALOGOUS = 'analogous',
-  TRIADIC = 'triadic'
+  TRIADIC = 'triadic',
 }
 
 export class ColorPalette {
   private colors: Color[] = [];
 
-  generate(count: 5 | 7 | 9, pattern: PalettePattern = PalettePattern.COMPLEMENTARY): Color[] {
+  generate(
+    count: 5 | 7 | 9,
+    pattern: PalettePattern = PalettePattern.COMPLEMENTARY
+  ): Color[] {
     this.colors = [];
 
     switch (pattern) {
@@ -36,7 +39,7 @@ export class ColorPalette {
     const baseHue = Math.random() * 360;
     const complementHue = (baseHue + 180) % 360;
     const saturationBase = 65 + Math.random() * 20; // More constrained saturation
-    
+
     for (let i = 0; i < count; i++) {
       let hue, saturation, lightness;
 
@@ -61,7 +64,11 @@ export class ColorPalette {
       saturation = Math.max(40, Math.min(100, saturation));
       lightness = Math.max(5, Math.min(95, lightness));
 
-      const color = this.hslToRgb((hue + 360) % 360 / 360, saturation / 100, lightness / 100);
+      const color = this.hslToRgb(
+        ((hue + 360) % 360) / 360,
+        saturation / 100,
+        lightness / 100
+      );
       this.colors.push(color);
     }
   }
@@ -73,10 +80,10 @@ export class ColorPalette {
 
     for (let i = 0; i < count; i++) {
       let hue, saturation, lightness;
-      
+
       const hueOffset = (hueRange / (count - 1)) * i - hueRange / 2;
       hue = (baseHue + hueOffset + 360) % 360;
-      
+
       if (i === 0) {
         // Dark color
         saturation = saturationBase + Math.random() * 15;
@@ -90,7 +97,7 @@ export class ColorPalette {
         saturation = saturationBase + (Math.random() - 0.5) * 25;
         lightness = 35 + Math.random() * 30; // Mid-range (35-65%)
       }
-      
+
       saturation = Math.max(40, Math.min(100, saturation));
       lightness = Math.max(5, Math.min(95, lightness));
 
@@ -106,10 +113,10 @@ export class ColorPalette {
 
     for (let i = 0; i < count; i++) {
       let hue, saturation, lightness;
-      
+
       const baseTriadIndex = i % 3;
       hue = triadicHues[baseTriadIndex] + (Math.random() - 0.5) * 15; // Smaller variation for cohesion
-      
+
       if (i === 0) {
         // Dark color
         saturation = saturationBase + Math.random() * 15;
@@ -123,11 +130,15 @@ export class ColorPalette {
         saturation = saturationBase + (Math.random() - 0.5) * 25;
         lightness = 35 + Math.random() * 30; // Mid-range (35-65%)
       }
-      
+
       saturation = Math.max(40, Math.min(100, saturation));
       lightness = Math.max(5, Math.min(95, lightness));
 
-      const color = this.hslToRgb((hue + 360) % 360 / 360, saturation / 100, lightness / 100);
+      const color = this.hslToRgb(
+        ((hue + 360) % 360) / 360,
+        saturation / 100,
+        lightness / 100
+      );
       this.colors.push(color);
     }
   }

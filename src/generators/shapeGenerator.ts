@@ -61,10 +61,10 @@ export class ShapeGenerator {
     const baseSize = 20 + Math.random() * 120;
     const extremeRatio = 0.1 + Math.random() * 0.3; // Very thin to very wide
     const shouldBeExtreme = Math.random() > 0.3; // 70% chance for extreme shapes
-    
+
     let shapeWidth = baseSize;
     let shapeHeight = baseSize;
-    
+
     if (shouldBeExtreme) {
       if (Math.random() > 0.5) {
         // Make extremely wide
@@ -190,13 +190,16 @@ export class ShapeGenerator {
 
     const width = shape.width || shape.size;
     const height = shape.height || shape.size;
-    
+
     // Use the larger dimension as length for more extreme lines
     const length = Math.max(width, height);
     const thickness = Math.min(width, height);
-    
+
     // Make lines much thicker or longer based on extreme dimensions
-    const actualStrokeWeight = Math.max(shape.strokeWeight || 2, thickness * 0.1);
+    const actualStrokeWeight = Math.max(
+      shape.strokeWeight || 2,
+      thickness * 0.1
+    );
     p.strokeWeight(actualStrokeWeight);
 
     const startX = -length / 2;

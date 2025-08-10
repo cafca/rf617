@@ -25,7 +25,11 @@ export class GenerationPipeline {
     };
   }
 
-  generate(paletteSize: 5 | 7 | 9, elementCount: number = 15, pattern: PalettePattern = PalettePattern.COMPLEMENTARY): void {
+  generate(
+    paletteSize: 5 | 7 | 9,
+    elementCount: number = 15,
+    pattern: PalettePattern = PalettePattern.COMPLEMENTARY
+  ): void {
     if (this.state.isGenerating) return;
 
     this.state.isGenerating = true;
@@ -39,7 +43,11 @@ export class GenerationPipeline {
     }
   }
 
-  private executeStages(paletteSize: 5 | 7 | 9, elementCount: number, pattern: PalettePattern): void {
+  private executeStages(
+    paletteSize: 5 | 7 | 9,
+    elementCount: number,
+    pattern: PalettePattern
+  ): void {
     this.p.clear();
 
     this.state.colors = this.colorPalette.generate(paletteSize, pattern);
