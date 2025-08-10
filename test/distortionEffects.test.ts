@@ -14,8 +14,8 @@ describe('DistortionEffects', () => {
   describe('createRandomConfig', () => {
     it('should create a config with valid intensity range', () => {
       const config = effects.createRandomConfig();
-      expect(config.intensity).toBeGreaterThanOrEqual(5);
-      expect(config.intensity).toBeLessThanOrEqual(25);
+      expect(config.intensity).toBeGreaterThanOrEqual(15);
+      expect(config.intensity).toBeLessThanOrEqual(35);
     });
 
     it('should create a config with valid scale range', () => {

@@ -3,10 +3,10 @@ import { ColorPalette, Color, PalettePattern } from '../utils/colorPalette';
 import { BackgroundGenerator } from '../generators/backgroundGenerator';
 import { ShapeGenerator, ShapeConfig } from '../generators/shapeGenerator';
 import {
-  SimpleEffects,
+  ShaderEffects,
   EffectType,
   EffectConfig,
-} from '../effects/simpleEffects';
+} from '../effects/shaderEffects';
 
 export interface GenerationState {
   colors: Color[];
@@ -16,7 +16,7 @@ export interface GenerationState {
 
 export class GenerationPipeline {
   private state: GenerationState;
-  private effects: SimpleEffects;
+  private effects: ShaderEffects;
 
   constructor(
     private p: p5,
@@ -24,7 +24,7 @@ export class GenerationPipeline {
     private backgroundGenerator: BackgroundGenerator,
     private shapeGenerator: ShapeGenerator
   ) {
-    this.effects = new SimpleEffects();
+    this.effects = new ShaderEffects();
     this.state = {
       colors: [],
       shapes: [],

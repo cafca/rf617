@@ -52,15 +52,17 @@ export class BackgroundGenerator {
     const color1 = colors[Math.floor(Math.random() * colors.length)];
     const color2 = colors[Math.floor(Math.random() * colors.length)];
 
-    for (let y = 0; y <= height; y++) {
+    // Use beginShape/endShape for WebGL compatibility
+    for (let y = 0; y <= height; y += 2) {
       const inter = p.map(y, 0, height, 0, 1);
       const c = p.lerpColor(
         p.color(color1.r, color1.g, color1.b),
         p.color(color2.r, color2.g, color2.b),
         inter
       );
-      p.stroke(c);
-      p.line(0, y, width, y);
+      p.fill(c);
+      p.noStroke();
+      p.rect(-width / 2, -height / 2 + y, width, 2);
     }
   }
 
@@ -73,15 +75,16 @@ export class BackgroundGenerator {
     const color1 = colors[Math.floor(Math.random() * colors.length)];
     const color2 = colors[Math.floor(Math.random() * colors.length)];
 
-    for (let x = 0; x <= width; x++) {
+    for (let x = 0; x <= width; x += 2) {
       const inter = p.map(x, 0, width, 0, 1);
       const c = p.lerpColor(
         p.color(color1.r, color1.g, color1.b),
         p.color(color2.r, color2.g, color2.b),
         inter
       );
-      p.stroke(c);
-      p.line(x, 0, x, height);
+      p.fill(c);
+      p.noStroke();
+      p.rect(-width / 2 + x, -height / 2, 2, height);
     }
   }
 
@@ -94,21 +97,43 @@ export class BackgroundGenerator {
     const color1 = colors[Math.floor(Math.random() * colors.length)];
     const color2 = colors[Math.floor(Math.random() * colors.length)];
 
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        const distance = Math.sqrt((x - 0) ** 2 + (y - 0) ** 2);
-        const maxDistance = Math.sqrt(width ** 2 + height ** 2);
-        const inter = distance / maxDistance;
+    // Create diagonal gradient using WebGL vertex color interpolation
+    p.noStroke();
 
-        const c = p.lerpColor(
-          p.color(color1.r, color1.g, color1.b),
-          p.color(color2.r, color2.g, color2.b),
-          inter
-        );
-        p.stroke(c);
-        p.point(x, y);
-      }
-    }
+    // Create a quad with vertex colors that interpolate diagonally
+    p.beginShape();
+
+    // Top-left corner - color1
+    p.fill(color1.r, color1.g, color1.b);
+    p.vertex(-width / 2, -height / 2);
+
+    // Top-right corner - interpolated
+    const topRightLerp = p.lerpColor(
+      p.color(color1.r, color1.g, color1.b),
+      p.color(color2.r, color2.g, color2.b),
+      0.5
+    );
+    p.fill(p.red(topRightLerp), p.green(topRightLerp), p.blue(topRightLerp));
+    p.vertex(width / 2, -height / 2);
+
+    // Bottom-right corner - color2
+    p.fill(color2.r, color2.g, color2.b);
+    p.vertex(width / 2, height / 2);
+
+    // Bottom-left corner - interpolated
+    const bottomLeftLerp = p.lerpColor(
+      p.color(color1.r, color1.g, color1.b),
+      p.color(color2.r, color2.g, color2.b),
+      0.5
+    );
+    p.fill(
+      p.red(bottomLeftLerp),
+      p.green(bottomLeftLerp),
+      p.blue(bottomLeftLerp)
+    );
+    p.vertex(-width / 2, height / 2);
+
+    p.endShape(p.CLOSE);
   }
 
   private generateRadialCenter(
@@ -119,22 +144,55 @@ export class BackgroundGenerator {
   ): void {
     const color1 = colors[Math.floor(Math.random() * colors.length)];
     const color2 = colors[Math.floor(Math.random() * colors.length)];
-    const centerX = width / 2;
-    const centerY = height / 2;
+
+    // Create radial gradient using concentric triangles
+    p.noStroke();
+
+    const segments = 32; // Number of triangular segments
+    const rings = 50; // Reduced rings for better performance
+
+    // Calculate radius to cover entire frame (diagonal distance to corners)
     const maxRadius = Math.sqrt((width / 2) ** 2 + (height / 2) ** 2);
 
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        const distance = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-        const inter = distance / maxRadius;
+    for (let ring = 0; ring < rings; ring++) {
+      const innerRadius = (ring / rings) * maxRadius;
+      const outerRadius = ((ring + 1) / rings) * maxRadius;
 
-        const c = p.lerpColor(
-          p.color(color1.r, color1.g, color1.b),
-          p.color(color2.r, color2.g, color2.b),
-          inter
+      // Interpolate color based on ring distance from center
+      const ringProgress = ring / (rings - 1);
+      const ringColor = p.lerpColor(
+        p.color(color1.r, color1.g, color1.b),
+        p.color(color2.r, color2.g, color2.b),
+        ringProgress
+      );
+
+      p.fill(p.red(ringColor), p.green(ringColor), p.blue(ringColor));
+
+      // Draw triangular segments for this ring
+      for (let i = 0; i < segments; i++) {
+        const angle1 = (i / segments) * Math.PI * 2;
+        const angle2 = ((i + 1) / segments) * Math.PI * 2;
+
+        p.beginShape();
+        // Inner ring vertices
+        p.vertex(
+          Math.cos(angle1) * innerRadius,
+          Math.sin(angle1) * innerRadius
         );
-        p.stroke(c);
-        p.point(x, y);
+        p.vertex(
+          Math.cos(angle2) * innerRadius,
+          Math.sin(angle2) * innerRadius
+        );
+        // Outer ring vertices
+        p.vertex(
+          Math.cos(angle2) * outerRadius,
+          Math.sin(angle2) * outerRadius
+        );
+        p.vertex(
+          Math.cos(angle1) * outerRadius,
+          Math.sin(angle1) * outerRadius
+        );
+        p.endShape(p.CLOSE);
       }
     }
   }
@@ -147,20 +205,55 @@ export class BackgroundGenerator {
   ): void {
     const color1 = colors[Math.floor(Math.random() * colors.length)];
     const color2 = colors[Math.floor(Math.random() * colors.length)];
+
+    // Create corner radial gradient using triangular fan from corner
+    p.noStroke();
+
+    const cornerX = -width / 2; // Top-left corner
+    const cornerY = -height / 2;
     const maxRadius = Math.sqrt(width ** 2 + height ** 2);
+    const rings = 50; // Reduced rings for better performance
+    const segments = 32; // More segments for smoother curves
 
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        const distance = Math.sqrt(x ** 2 + y ** 2);
-        const inter = distance / maxRadius;
+    for (let ring = 0; ring < rings; ring++) {
+      const innerRadius = (ring / rings) * maxRadius;
+      const outerRadius = ((ring + 1) / rings) * maxRadius;
 
-        const c = p.lerpColor(
-          p.color(color1.r, color1.g, color1.b),
-          p.color(color2.r, color2.g, color2.b),
-          inter
+      // Interpolate color based on distance from corner
+      const ringProgress = ring / (rings - 1);
+      const ringColor = p.lerpColor(
+        p.color(color1.r, color1.g, color1.b),
+        p.color(color2.r, color2.g, color2.b),
+        ringProgress
+      );
+
+      p.fill(p.red(ringColor), p.green(ringColor), p.blue(ringColor));
+
+      // Draw quarter-circle segments radiating from corner
+      for (let i = 0; i < segments; i++) {
+        const angle1 = ((i / segments) * Math.PI) / 2; // 0 to π/2 (90 degrees)
+        const angle2 = (((i + 1) / segments) * Math.PI) / 2;
+
+        p.beginShape();
+        // Inner arc vertices
+        p.vertex(
+          cornerX + Math.cos(angle1) * innerRadius,
+          cornerY + Math.sin(angle1) * innerRadius
         );
-        p.stroke(c);
-        p.point(x, y);
+        p.vertex(
+          cornerX + Math.cos(angle2) * innerRadius,
+          cornerY + Math.sin(angle2) * innerRadius
+        );
+        // Outer arc vertices
+        p.vertex(
+          cornerX + Math.cos(angle2) * outerRadius,
+          cornerY + Math.sin(angle2) * outerRadius
+        );
+        p.vertex(
+          cornerX + Math.cos(angle1) * outerRadius,
+          cornerY + Math.sin(angle1) * outerRadius
+        );
+        p.endShape(p.CLOSE);
       }
     }
   }
@@ -190,7 +283,8 @@ export class BackgroundGenerator {
 
         p.fill(c);
         p.noStroke();
-        p.rect(x, y, 2, 2);
+        // Adjust coordinates for WebGL centered origin
+        p.rect(-width / 2 + x, -height / 2 + y, 2, 2);
       }
     }
   }

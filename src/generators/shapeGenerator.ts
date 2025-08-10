@@ -79,8 +79,9 @@ export class ShapeGenerator {
 
     return {
       type,
-      x: Math.random() * width,
-      y: Math.random() * height,
+      // Adjust coordinates for WebGL centered origin
+      x: (Math.random() - 0.5) * width,
+      y: (Math.random() - 0.5) * height,
       color,
       opacity: 0.3 + Math.random() * 0.5,
       size: baseSize,

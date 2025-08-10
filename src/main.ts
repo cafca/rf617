@@ -3,34 +3,34 @@ import { ColorPalette, Color, PalettePattern } from './utils/colorPalette';
 import { BackgroundGenerator } from './generators/backgroundGenerator';
 import { ShapeGenerator } from './generators/shapeGenerator';
 import { GenerationPipeline } from './core/generationPipeline';
-import { EffectType } from './effects/simpleEffects';
+import { EffectType } from './effects/shaderEffects';
 
-// Render at half resolution for performance
-const CANVAS_WIDTH = 200;
-const CANVAS_HEIGHT = 250;
+// Render at full display resolution for proper HiDPI
+const CANVAS_WIDTH = 400;
+const CANVAS_HEIGHT = 500;
 
 let pipeline: GenerationPipeline;
 let currentPaletteSize = 7;
 let currentElementCount = 1;
 let currentPalettePattern = PalettePattern.COMPLEMENTARY;
-let currentEffect = EffectType.OFF;
+let currentEffect = EffectType.DISPLACEMENT;
 let paletteCanvas: p5;
 
 const sketch = (p: p5) => {
   p.setup = () => {
     // Force pixel density to 1 for consistent rendering
     p.pixelDensity(1);
-    const canvas = p.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+    const canvas = p.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT, p.WEBGL);
     const canvasWrapper = document.getElementById('canvas-wrapper');
     if (canvasWrapper) {
       canvas.parent(canvasWrapper);
     }
 
-    // Scale up the canvas with CSS for display
+    // Canvas is now at native display resolution - no CSS scaling needed
     const canvasElement = canvas.elt as HTMLCanvasElement;
     canvasElement.style.width = '400px';
     canvasElement.style.height = '500px';
-    canvasElement.style.imageRendering = 'auto'; // Better scaling
+    canvasElement.style.imageRendering = 'pixelated'; // Crisp pixel-perfect rendering
 
     const colorPalette = new ColorPalette();
     const backgroundGenerator = new BackgroundGenerator();

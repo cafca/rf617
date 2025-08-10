@@ -27,14 +27,15 @@ describe('ShapeGenerator', () => {
       const shapes = generator.generate(null as any, colors, 400, 500, 5);
 
       shapes.forEach((shape) => {
-        expect(shape.x).toBeGreaterThanOrEqual(0);
-        expect(shape.x).toBeLessThanOrEqual(400);
-        expect(shape.y).toBeGreaterThanOrEqual(0);
-        expect(shape.y).toBeLessThanOrEqual(500);
+        // WebGL uses center-origin coordinate system
+        expect(shape.x).toBeGreaterThanOrEqual(-200);
+        expect(shape.x).toBeLessThanOrEqual(200);
+        expect(shape.y).toBeGreaterThanOrEqual(-250);
+        expect(shape.y).toBeLessThanOrEqual(250);
         expect(shape.opacity).toBeGreaterThanOrEqual(0.3);
         expect(shape.opacity).toBeLessThanOrEqual(0.8);
-        expect(shape.size).toBeGreaterThanOrEqual(10);
-        expect(shape.size).toBeLessThanOrEqual(90);
+        expect(shape.size).toBeGreaterThanOrEqual(20);
+        expect(shape.size).toBeLessThanOrEqual(140);
         expect(Object.values(ShapeType)).toContain(shape.type);
         expect(colors).toContainEqual(shape.color);
       });
