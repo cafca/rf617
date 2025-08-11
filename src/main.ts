@@ -14,7 +14,7 @@ let currentPaletteSize = 7;
 let currentElementCount = 1;
 let currentPalettePattern = PalettePattern.COMPLEMENTARY;
 let currentBackgroundEffect = EffectType.WAVES;
-let currentForegroundEffect = EffectType.OFF;
+let currentForegroundEffect = EffectType.DISPLACEMENT;
 let currentDebugMode = false;
 let paletteCanvas: p5;
 
