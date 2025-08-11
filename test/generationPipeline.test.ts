@@ -1,14 +1,29 @@
 import { describe, it, expect, vi } from 'vitest';
 import { GenerationPipeline } from '../src/core/generationPipeline';
-import { ColorPalette } from '../src/utils/colorPalette';
+import { ColorPalette, PalettePattern } from '../src/utils/colorPalette';
 import { BackgroundGenerator } from '../src/generators/backgroundGenerator';
 import { ShapeGenerator } from '../src/generators/shapeGenerator';
+import { EffectType } from '../src/effects/shaderEffects';
+
+// Mock texture object
+const mockTexture = {
+  width: 400,
+  height: 500,
+};
 
 const mockP5 = {
   width: 400,
   height: 500,
   clear: vi.fn(),
   save: vi.fn(),
+  get: vi.fn(() => mockTexture),
+  image: vi.fn(),
+  createGraphics: vi.fn(() => ({
+    pixelDensity: vi.fn(),
+    loadPixels: vi.fn(),
+    updatePixels: vi.fn(),
+    pixels: new Array(64 * 80 * 4).fill(128),
+  })),
   // WebGL methods needed by BackgroundGenerator
   noStroke: vi.fn(),
   fill: vi.fn(),
@@ -41,6 +56,15 @@ const mockP5 = {
   triangle: vi.fn(),
   noFill: vi.fn(),
   bezier: vi.fn(),
+  // Shader methods
+  shader: vi.fn(),
+  resetShader: vi.fn(),
+  createShader: vi.fn(() => ({
+    setUniform: vi.fn().mockReturnThis(),
+  })),
+  plane: vi.fn(),
+  filter: vi.fn(),
+  BLUR: 'blur',
 } as any;
 
 describe('GenerationPipeline', () => {
@@ -68,7 +92,13 @@ describe('GenerationPipeline', () => {
 
   describe('generate', () => {
     it('should execute all generation stages in order', () => {
-      pipeline.generate(7);
+      pipeline.generate(
+        7,
+        15,
+        PalettePattern.COMPLEMENTARY,
+        EffectType.WAVES,
+        EffectType.DISPLACEMENT
+      );
 
       expect(backgroundGenerator.generate).toHaveBeenCalledWith(
         mockP5,
@@ -90,7 +120,13 @@ describe('GenerationPipeline', () => {
     });
 
     it('should update state with generated colors and shapes', () => {
-      pipeline.generate(5);
+      pipeline.generate(
+        5,
+        15,
+        PalettePattern.COMPLEMENTARY,
+        EffectType.OFF,
+        EffectType.OFF
+      );
       const state = pipeline.getState();
 
       expect(state.colors).toHaveLength(5);
@@ -103,14 +139,26 @@ describe('GenerationPipeline', () => {
       expect(pipeline.isGenerating()).toBe(false);
 
       // Start generation
-      pipeline.generate(7);
+      pipeline.generate(
+        7,
+        15,
+        PalettePattern.COMPLEMENTARY,
+        EffectType.OFF,
+        EffectType.OFF
+      );
 
       // Check that during execution, the state shows generating
       const stateWhileGenerating = pipeline.getState();
       expect(stateWhileGenerating.isGenerating).toBe(false); // Synchronous execution means it's already done
 
       // Multiple calls should work since they're synchronous
-      pipeline.generate(7);
+      pipeline.generate(
+        7,
+        15,
+        PalettePattern.COMPLEMENTARY,
+        EffectType.OFF,
+        EffectType.OFF
+      );
       expect(backgroundGenerator.generate).toHaveBeenCalledTimes(2);
     });
   });
@@ -137,7 +185,13 @@ describe('GenerationPipeline', () => {
 
   describe('getCurrentColors', () => {
     it('should return current colors array', () => {
-      pipeline.generate(7);
+      pipeline.generate(
+        7,
+        15,
+        PalettePattern.COMPLEMENTARY,
+        EffectType.OFF,
+        EffectType.OFF
+      );
       const colors = pipeline.getCurrentColors();
 
       expect(colors).toHaveLength(7);
