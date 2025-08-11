@@ -13,8 +13,9 @@ let pipeline: GenerationPipeline;
 let currentPaletteSize = 7;
 let currentElementCount = 1;
 let currentPalettePattern = PalettePattern.COMPLEMENTARY;
-let currentEffect = EffectType.DISPLACEMENT;
-let currentNormalType = 'checker'; // 'checker' or 'perlin'
+let currentBackgroundEffect = EffectType.WAVES;
+let currentForegroundEffect = EffectType.OFF;
+let currentDebugMode = false;
 let paletteCanvas: p5;
 
 const sketch = (p: p5) => {
@@ -56,8 +57,9 @@ function generateArt() {
     currentPaletteSize as 5 | 7 | 9,
     currentElementCount,
     currentPalettePattern,
-    currentEffect,
-    currentNormalType as 'checker' | 'perlin'
+    currentBackgroundEffect,
+    currentForegroundEffect,
+    currentDebugMode
   );
   updatePaletteDisplay();
 }
@@ -75,8 +77,12 @@ function setupEventListeners() {
   const patternOptions = document.querySelectorAll('[data-pattern]');
   const colorOptions = document.querySelectorAll('[data-size]');
   const elementOptions = document.querySelectorAll('[data-elements]');
-  const effectOptions = document.querySelectorAll('[data-effect]');
-  const normalOptions = document.querySelectorAll('[data-normal]');
+  const layerEffectOptions = document.querySelectorAll(
+    '[data-layer][data-effect]'
+  );
+  const debugOption = document.querySelector(
+    '[data-effect="debug_normal"]:not([data-layer])'
+  );
 
   generateBtn?.addEventListener('click', generateArt);
 
@@ -144,44 +150,44 @@ function setupEventListeners() {
     });
   });
 
-  // Effect option event listeners
-  effectOptions.forEach((option) => {
+  // Layer effect option event listeners
+  layerEffectOptions.forEach((option) => {
     option.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
       const effect = target.dataset.effect as EffectType;
+      const layer = target.dataset.layer as 'background' | 'foreground';
 
-      // Update active state
-      effectOptions.forEach((opt) => {
+      // Update active state within the same layer
+      const sameLayerOptions = document.querySelectorAll(
+        `[data-layer="${layer}"][data-effect]`
+      );
+      sameLayerOptions.forEach((opt) => {
         opt.classList.remove('active');
       });
       target.classList.add('active');
 
-      // Update current effect
-      currentEffect = effect;
+      // Update current effect for the specific layer
+      if (layer === 'background') {
+        currentBackgroundEffect = effect;
+      } else if (layer === 'foreground') {
+        currentForegroundEffect = effect;
+      }
 
       // Auto-regenerate
       generateArt();
     });
   });
 
-  // Normal option event listeners
-  normalOptions.forEach((option) => {
-    option.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      const normal = target.dataset.normal as 'checker' | 'perlin';
+  // Debug mode event listener
+  debugOption?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
 
-      // Update active state
-      normalOptions.forEach((opt) => {
-        opt.classList.remove('active');
-      });
-      target.classList.add('active');
+    // Toggle debug mode
+    currentDebugMode = !currentDebugMode;
+    target.classList.toggle('active', currentDebugMode);
 
-      // Update current normal type
-      currentNormalType = normal;
-
-      // Auto-regenerate
-      generateArt();
-    });
+    // Auto-regenerate
+    generateArt();
   });
 }
 

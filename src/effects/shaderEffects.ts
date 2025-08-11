@@ -8,10 +8,15 @@ export enum EffectType {
   DEBUG_NORMAL = 'debug_normal',
 }
 
+export enum LayerType {
+  BACKGROUND = 'background',
+  FOREGROUND = 'foreground',
+}
+
 export interface EffectConfig {
   type: EffectType;
+  layer?: LayerType;
   intensity?: number;
-  normalType?: 'checker' | 'perlin';
 }
 
 export class ShaderEffects {
@@ -30,14 +35,10 @@ export class ShaderEffects {
         this.applyWaves(p, config.intensity || 1);
         break;
       case EffectType.DISPLACEMENT:
-        this.applyDisplacement(
-          p,
-          config.intensity || 1,
-          config.normalType || 'checker'
-        );
+        this.applyDisplacement(p, config.intensity || 1);
         break;
       case EffectType.DEBUG_NORMAL:
-        this.showNormalMap(p, config.normalType || 'checker');
+        this.showNormalMap(p);
         break;
     }
   }
@@ -125,11 +126,7 @@ export class ShaderEffects {
     p.resetShader();
   }
 
-  private applyDisplacement(
-    p: p5,
-    intensity: number,
-    normalType: 'checker' | 'perlin' = 'checker'
-  ): void {
+  private applyDisplacement(p: p5, intensity: number): void {
     // Create shader if it doesn't exist
     if (!this.displacementShader) {
       const vertSource = `
@@ -194,14 +191,11 @@ export class ShaderEffects {
 
     if (!this.displacementShader) return;
 
+    // Generate normal map BEFORE activating shader
+    const normalMap = this.generateStaticNormalMap(p);
+
     // Create a copy of the current canvas as a texture using get()
     const canvasTexture = p.get();
-
-    // Generate normal map based on type
-    const normalMap =
-      normalType === 'perlin'
-        ? this.generateNormalMap(p)
-        : this.generateStaticNormalMap(p);
 
     // Clear the canvas and apply the displacement shader
     p.clear();
@@ -224,51 +218,9 @@ export class ShaderEffects {
     p.resetShader();
   }
 
-  private generateNormalMap(p: p5): p5.Graphics {
-    // Use much smaller resolution for performance - will be upscaled by GPU
-    const mapWidth = 64;
-    const mapHeight = 80; // Maintain 4:5 aspect ratio
-
-    const normalMapGraphics = p.createGraphics(mapWidth, mapHeight);
-    normalMapGraphics.pixelDensity(1);
-    normalMapGraphics.loadPixels();
-
-    const scale = 0.1;
-    const time = p.millis() * 0.001;
-
-    for (let x = 0; x < mapWidth; x++) {
-      for (let y = 0; y < mapHeight; y++) {
-        // Generate height values using Perlin noise with transformations
-        const height = p.noise(x * scale + time, y * scale, time * 0.5);
-        const heightX = p.noise((x + 1) * scale + time, y * scale, time * 0.5);
-        const heightY = p.noise(x * scale + time, (y + 1) * scale, time * 0.5);
-
-        // Calculate normal from height differences
-        const normalX = (height - heightX) * 255 + 128;
-        const normalY = (height - heightY) * 255 + 128;
-        const normalZ = 255; // Always pointing up
-
-        const index = (y * mapWidth + x) * 4;
-        normalMapGraphics.pixels[index] = normalX;
-        normalMapGraphics.pixels[index + 1] = normalY;
-        normalMapGraphics.pixels[index + 2] = normalZ;
-        normalMapGraphics.pixels[index + 3] = 255;
-      }
-    }
-
-    normalMapGraphics.updatePixels();
-    return normalMapGraphics;
-  }
-
-  private showNormalMap(
-    p: p5,
-    normalType: 'checker' | 'perlin' = 'checker'
-  ): void {
-    // Generate the normal map based on type
-    const normalMap =
-      normalType === 'perlin'
-        ? this.generateNormalMap(p)
-        : this.generateStaticNormalMap(p);
+  private showNormalMap(p: p5): void {
+    // Generate the checker normal map
+    const normalMap = this.generateStaticNormalMap(p);
 
     // Clear canvas and display the normal map directly
     p.clear();

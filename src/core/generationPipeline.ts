@@ -6,6 +6,7 @@ import {
   ShaderEffects,
   EffectType,
   EffectConfig,
+  LayerType,
 } from '../effects/shaderEffects';
 
 export interface GenerationState {
@@ -36,8 +37,9 @@ export class GenerationPipeline {
     paletteSize: 5 | 7 | 9,
     elementCount: number = 15,
     pattern: PalettePattern = PalettePattern.COMPLEMENTARY,
-    effect: EffectType = EffectType.OFF,
-    normalType: 'checker' | 'perlin' = 'checker'
+    backgroundEffect: EffectType = EffectType.OFF,
+    foregroundEffect: EffectType = EffectType.OFF,
+    debugMode: boolean = false
   ): void {
     if (this.state.isGenerating) return;
 
@@ -48,8 +50,9 @@ export class GenerationPipeline {
         paletteSize,
         elementCount,
         pattern,
-        effect,
-        normalType
+        backgroundEffect,
+        foregroundEffect,
+        debugMode
       );
     } catch (error) {
       console.error('Generation failed:', error);
@@ -62,13 +65,25 @@ export class GenerationPipeline {
     paletteSize: 5 | 7 | 9,
     elementCount: number,
     pattern: PalettePattern,
-    effect: EffectType,
-    normalType: 'checker' | 'perlin' = 'checker'
+    backgroundEffect: EffectType,
+    foregroundEffect: EffectType,
+    debugMode: boolean
   ): void {
     this.p.clear();
 
     this.state.colors = this.colorPalette.generate(paletteSize, pattern);
 
+    // Handle global debug mode first
+    if (debugMode) {
+      const debugConfig: EffectConfig = {
+        type: EffectType.DEBUG_NORMAL,
+        intensity: 1,
+      };
+      this.effects.apply(this.p, debugConfig);
+      return;
+    }
+
+    // Generate background
     this.backgroundGenerator.generate(
       this.p,
       this.state.colors,
@@ -76,6 +91,26 @@ export class GenerationPipeline {
       this.p.height
     );
 
+    // Capture background texture before applying effects
+    let backgroundTexture = this.p.get();
+
+    // Apply background effects to isolated background
+    if (backgroundEffect !== EffectType.OFF) {
+      this.p.clear();
+      this.p.image(backgroundTexture, -this.p.width / 2, -this.p.height / 2);
+
+      const bgEffectConfig: EffectConfig = {
+        type: backgroundEffect,
+        layer: LayerType.BACKGROUND,
+        intensity: 1,
+      };
+      this.effects.apply(this.p, bgEffectConfig);
+
+      // Save processed background
+      backgroundTexture = this.p.get();
+    }
+
+    // Generate shapes for foreground layer
     this.state.shapes = this.shapeGenerator.generate(
       this.p,
       this.state.colors,
@@ -84,17 +119,33 @@ export class GenerationPipeline {
       elementCount
     );
 
+    // Draw shapes on clean canvas to isolate foreground
+    this.p.clear();
     this.shapeGenerator.drawShapes(this.p, this.state.shapes);
 
-    // Apply effects stage
-    if (effect !== EffectType.OFF) {
-      const effectConfig: EffectConfig = {
-        type: effect,
+    // Capture foreground shapes texture
+    let foregroundTexture = this.p.get();
+
+    // Apply foreground effects to isolated shapes
+    if (foregroundEffect !== EffectType.OFF) {
+      const fgEffectConfig: EffectConfig = {
+        type: foregroundEffect,
+        layer: LayerType.FOREGROUND,
         intensity: 1,
-        normalType: normalType,
       };
-      this.effects.apply(this.p, effectConfig);
+      this.effects.apply(this.p, fgEffectConfig);
+
+      // Save processed foreground
+      foregroundTexture = this.p.get();
     }
+
+    // Composite final image: background + foreground
+    this.p.clear();
+    this.p.push();
+    this.p.translate(-this.p.width / 2, -this.p.height / 2);
+    this.p.image(backgroundTexture, 0, 0);
+    this.p.image(foregroundTexture, 0, 0);
+    this.p.pop();
   }
 
   exportImage(): void {
