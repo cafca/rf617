@@ -306,10 +306,28 @@ export class ShaderEffects {
 
   // Cleanup method to dispose of WebGL resources
   dispose(): void {
+    // Clear graphics objects
     if (this.normalMapGraphics) {
-      // Note: p5.js doesn't provide a direct dispose method for graphics
-      // but we can at least clear our reference
       this.normalMapGraphics = null;
     }
+
+    // Clear shader references (p5.js will handle WebGL cleanup)
+    this.wavesShader = null;
+    this.displacementShader = null;
+
+    console.log('ShaderEffects resources disposed');
+  }
+
+  // Get shader memory info for monitoring
+  getShaderInfo(): {
+    wavesShaderLoaded: boolean;
+    displacementShaderLoaded: boolean;
+    normalMapGraphicsCreated: boolean;
+  } {
+    return {
+      wavesShaderLoaded: !!this.wavesShader,
+      displacementShaderLoaded: !!this.displacementShader,
+      normalMapGraphicsCreated: !!this.normalMapGraphics,
+    };
   }
 }

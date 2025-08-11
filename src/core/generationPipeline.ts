@@ -227,6 +227,49 @@ export class GenerationPipeline {
     this.p.save(filename);
   }
 
+  // Resource cleanup for memory management
+  dispose(): void {
+    // Clear texture references to help garbage collection
+    this.state.backgroundTexture = undefined;
+    this.state.foregroundTexture = undefined;
+    this.state.processedBackgroundTexture = undefined;
+    this.state.processedForegroundTexture = undefined;
+    this.state.hasStaticContent = false;
+
+    // Dispose shader effects
+    this.effects.dispose();
+
+    console.log('GenerationPipeline resources disposed');
+  }
+
+  // Get memory usage info for monitoring
+  getMemoryInfo(): {
+    jsHeapUsed: number | string;
+    jsHeapTotal: number | string;
+    texturesInState: {
+      background: boolean;
+      foreground: boolean;
+      processedBackground: boolean;
+      processedForeground: boolean;
+    };
+  } {
+    const memInfo = (
+      performance as {
+        memory?: { usedJSHeapSize?: number; totalJSHeapSize?: number };
+      }
+    ).memory;
+    return {
+      jsHeapUsed: memInfo?.usedJSHeapSize || 'unavailable',
+      jsHeapTotal: memInfo?.totalJSHeapSize || 'unavailable',
+      texturesInState: {
+        background: !!this.state.backgroundTexture,
+        foreground: !!this.state.foregroundTexture,
+        processedBackground: !!this.state.processedBackgroundTexture,
+        processedForeground: !!this.state.processedForegroundTexture,
+      },
+    };
+  }
+
   getState(): GenerationState {
     return { ...this.state };
   }
