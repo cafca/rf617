@@ -65,6 +65,7 @@ const mockP5 = {
   plane: vi.fn(),
   filter: vi.fn(),
   BLUR: 'blur',
+  millis: vi.fn(() => 1000), // Mock time for animation
 } as any;
 
 describe('GenerationPipeline', () => {

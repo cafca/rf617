@@ -22,6 +22,7 @@ export interface EffectConfig {
 export class ShaderEffects {
   private wavesShader: p5.Shader | null = null;
   private displacementShader: p5.Shader | null = null;
+  private normalMapGraphics: p5.Graphics | null = null;
 
   apply(p: p5, config: EffectConfig): void {
     switch (config.type) {
@@ -75,16 +76,25 @@ export class ShaderEffects {
 
         uniform sampler2D tex0;
         uniform float intensity;
+        uniform float time;
         varying vec2 vTexCoord;
 
         void main() {
           // Flip the y coordinate to correct upside-down rendering
           vec2 flippedCoord = vec2(vTexCoord.x, 1.0 - vTexCoord.y);
 
-          // Offset the input coordinate with wave distortion
+          // Animated wave distortion with time-varying frequency and phase
           vec2 warpedCoord = flippedCoord;
-          warpedCoord.x += intensity * 0.05 * sin(flippedCoord.y * 10.0);
-          warpedCoord.y += intensity * 0.05 * sin(flippedCoord.x * 10.0);
+          float timeOffset = time * 2.0;
+          float freq1 = 8.0 + 4.0 * sin(time * 0.8);
+          float freq2 = 12.0 + 3.0 * cos(time * 1.2);
+          
+          warpedCoord.x += intensity * 0.04 * sin(flippedCoord.y * freq1 + timeOffset);
+          warpedCoord.y += intensity * 0.04 * sin(flippedCoord.x * freq2 + timeOffset * 0.7);
+          
+          // Add secondary wave for more complex motion
+          warpedCoord.x += intensity * 0.02 * cos(flippedCoord.y * freq2 * 0.5 - timeOffset);
+          warpedCoord.y += intensity * 0.02 * cos(flippedCoord.x * freq1 * 0.5 - timeOffset * 0.5);
 
           // Set the new color by looking up the warped coordinate
           gl_FragColor = texture2D(tex0, warpedCoord);
@@ -102,15 +112,15 @@ export class ShaderEffects {
 
     if (!this.wavesShader) return;
 
-    // Create a copy of the current canvas as a texture using get()
+    // Create a copy of the current canvas as a texture
     const canvasTexture = p.get();
 
     // Clear the canvas and apply the wave distortion shader
     p.clear();
     p.shader(this.wavesShader);
-    this.wavesShader
-      .setUniform('tex0', canvasTexture)
-      .setUniform('intensity', intensity);
+    this.wavesShader.setUniform('tex0', canvasTexture);
+    this.wavesShader.setUniform('intensity', intensity);
+    this.wavesShader.setUniform('time', p.millis() * 0.001);
 
     // Draw fullscreen quad that covers the entire canvas
     p.push();
@@ -194,7 +204,7 @@ export class ShaderEffects {
     // Generate normal map BEFORE activating shader
     const normalMap = this.generateStaticNormalMap(p);
 
-    // Create a copy of the current canvas as a texture using get()
+    // Create a copy of the current canvas as a texture
     const canvasTexture = p.get();
 
     // Clear the canvas and apply the displacement shader
@@ -231,42 +241,75 @@ export class ShaderEffects {
   }
 
   private generateStaticNormalMap(p: p5): p5.Graphics {
-    // Create a simple static test pattern for debugging
+    // Create an animated checker pattern for displacement
     const mapWidth = 64;
     const mapHeight = 80;
 
-    const normalMapGraphics = p.createGraphics(mapWidth, mapHeight);
-    normalMapGraphics.pixelDensity(1);
-    normalMapGraphics.loadPixels();
+    // Create graphics object only once and reuse it
+    if (!this.normalMapGraphics) {
+      this.normalMapGraphics = p.createGraphics(mapWidth, mapHeight);
+      this.normalMapGraphics.pixelDensity(1);
+    }
+
+    this.normalMapGraphics.loadPixels();
+
+    // Animate the checker pattern with rotation and scale
+    const time = p.millis() * 0.001;
+    const rotation = time * 0.3; // Slow rotation
+    const scale = 8 + 2 * Math.sin(time * 0.5); // Breathing scale effect
+
+    const centerX = mapWidth * 0.5;
+    const centerY = mapHeight * 0.5;
+    const cosR = Math.cos(rotation);
+    const sinR = Math.sin(rotation);
 
     for (let x = 0; x < mapWidth; x++) {
       for (let y = 0; y < mapHeight; y++) {
-        // Create a simple checkerboard pattern with different normal directions
-        const isCheckered = (Math.floor(x / 8) + Math.floor(y / 8)) % 2 === 0;
+        // Apply rotation around center
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const rotX = dx * cosR - dy * sinR + centerX;
+        const rotY = dx * sinR + dy * cosR + centerY;
+
+        // Create animated checkerboard pattern
+        const checkerX = Math.floor(rotX / scale);
+        const checkerY = Math.floor(rotY / scale);
+        const isCheckered = (checkerX + checkerY) % 2 === 0;
 
         let normalX = 128; // Neutral
         let normalY = 128; // Neutral
         const normalZ = 255; // Always pointing up
 
         if (isCheckered) {
-          // Push normals left and down
-          normalX = 100;
-          normalY = 100;
+          // Animate the normal direction based on time
+          const intensity = 0.3 + 0.2 * Math.sin(time * 1.5);
+          normalX = 128 - intensity * 56; // Push normals left
+          normalY = 128 - intensity * 56; // Push normals down
         } else {
-          // Push normals right and up
-          normalX = 156;
-          normalY = 156;
+          // Counter-animate for opposite squares
+          const intensity = 0.3 + 0.2 * Math.cos(time * 1.5);
+          normalX = 128 + intensity * 56; // Push normals right
+          normalY = 128 + intensity * 56; // Push normals up
         }
 
         const index = (y * mapWidth + x) * 4;
-        normalMapGraphics.pixels[index] = normalX;
-        normalMapGraphics.pixels[index + 1] = normalY;
-        normalMapGraphics.pixels[index + 2] = normalZ;
-        normalMapGraphics.pixels[index + 3] = 255;
+        this.normalMapGraphics.pixels[index] = Math.round(normalX);
+        this.normalMapGraphics.pixels[index + 1] = Math.round(normalY);
+        this.normalMapGraphics.pixels[index + 2] = normalZ;
+        this.normalMapGraphics.pixels[index + 3] = 255;
       }
     }
 
-    normalMapGraphics.updatePixels();
-    return normalMapGraphics;
+    this.normalMapGraphics.updatePixels();
+    return this.normalMapGraphics;
+  }
+
+  // Cleanup method to dispose of WebGL resources
+  dispose(): void {
+    if (this.normalMapGraphics) {
+      // Note: p5.js doesn't provide a direct dispose method for graphics
+      // but we can at least clear our reference
+      this.normalMapGraphics = null;
+    }
   }
 }

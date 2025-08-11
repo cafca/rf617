@@ -13,6 +13,13 @@ export interface GenerationState {
   colors: Color[];
   shapes: ShapeConfig[];
   isGenerating: boolean;
+  backgroundTexture?: p5.Image;
+  foregroundTexture?: p5.Image;
+  hasStaticContent: boolean;
+  processedBackgroundTexture?: p5.Image;
+  processedForegroundTexture?: p5.Image;
+  lastBackgroundEffect?: EffectType;
+  lastForegroundEffect?: EffectType;
 }
 
 export class GenerationPipeline {
@@ -30,6 +37,7 @@ export class GenerationPipeline {
       colors: [],
       shapes: [],
       isGenerating: false,
+      hasStaticContent: false,
     };
   }
 
@@ -54,10 +62,29 @@ export class GenerationPipeline {
         foregroundEffect,
         debugMode
       );
+      this.state.hasStaticContent = true;
     } catch (error) {
       console.error('Generation failed:', error);
     } finally {
       this.state.isGenerating = false;
+    }
+  }
+
+  updateAnimatedEffects(
+    backgroundEffect: EffectType = EffectType.OFF,
+    foregroundEffect: EffectType = EffectType.OFF,
+    debugMode: boolean = false
+  ): void {
+    if (!this.state.hasStaticContent || this.state.isGenerating) return;
+
+    try {
+      this.applyEffectsToStaticContent(
+        backgroundEffect,
+        foregroundEffect,
+        debugMode
+      );
+    } catch (error) {
+      console.error('Animation update failed:', error);
     }
   }
 
@@ -69,48 +96,37 @@ export class GenerationPipeline {
     foregroundEffect: EffectType,
     debugMode: boolean
   ): void {
+    // Generate static content (colors, shapes, positions)
+    this.generateStaticContent(paletteSize, elementCount, pattern);
+
+    // Apply effects to the static content
+    this.applyEffectsToStaticContent(
+      backgroundEffect,
+      foregroundEffect,
+      debugMode
+    );
+  }
+
+  private generateStaticContent(
+    paletteSize: 5 | 7 | 9,
+    elementCount: number,
+    pattern: PalettePattern
+  ): void {
     this.p.clear();
 
+    // Generate colors (static)
     this.state.colors = this.colorPalette.generate(paletteSize, pattern);
 
-    // Handle global debug mode first
-    if (debugMode) {
-      const debugConfig: EffectConfig = {
-        type: EffectType.DEBUG_NORMAL,
-        intensity: 1,
-      };
-      this.effects.apply(this.p, debugConfig);
-      return;
-    }
-
-    // Generate background
+    // Generate background (static)
     this.backgroundGenerator.generate(
       this.p,
       this.state.colors,
       this.p.width,
       this.p.height
     );
+    this.state.backgroundTexture = this.p.get();
 
-    // Capture background texture before applying effects
-    let backgroundTexture = this.p.get();
-
-    // Apply background effects to isolated background
-    if (backgroundEffect !== EffectType.OFF) {
-      this.p.clear();
-      this.p.image(backgroundTexture, -this.p.width / 2, -this.p.height / 2);
-
-      const bgEffectConfig: EffectConfig = {
-        type: backgroundEffect,
-        layer: LayerType.BACKGROUND,
-        intensity: 1,
-      };
-      this.effects.apply(this.p, bgEffectConfig);
-
-      // Save processed background
-      backgroundTexture = this.p.get();
-    }
-
-    // Generate shapes for foreground layer
+    // Generate shapes (static positions and properties)
     this.state.shapes = this.shapeGenerator.generate(
       this.p,
       this.state.colors,
@@ -119,15 +135,59 @@ export class GenerationPipeline {
       elementCount
     );
 
-    // Draw shapes on clean canvas to isolate foreground
+    // Draw shapes on clean canvas
     this.p.clear();
     this.shapeGenerator.drawShapes(this.p, this.state.shapes);
+    this.state.foregroundTexture = this.p.get();
+  }
 
-    // Capture foreground shapes texture
-    let foregroundTexture = this.p.get();
+  private applyEffectsToStaticContent(
+    backgroundEffect: EffectType,
+    foregroundEffect: EffectType,
+    debugMode: boolean
+  ): void {
+    // Handle global debug mode first
+    if (debugMode) {
+      const debugConfig: EffectConfig = {
+        type: EffectType.DEBUG_NORMAL,
+        intensity: 1,
+      };
+      this.p.clear();
+      this.effects.apply(this.p, debugConfig);
+      return;
+    }
 
-    // Apply foreground effects to isolated shapes
-    if (foregroundEffect !== EffectType.OFF) {
+    // Process background first
+    let processedBackground = this.state.backgroundTexture;
+    if (backgroundEffect !== EffectType.OFF && this.state.backgroundTexture) {
+      this.p.clear();
+      this.p.image(
+        this.state.backgroundTexture,
+        -this.p.width / 2,
+        -this.p.height / 2
+      );
+
+      const bgEffectConfig: EffectConfig = {
+        type: backgroundEffect,
+        layer: LayerType.BACKGROUND,
+        intensity: 1,
+      };
+      this.effects.apply(this.p, bgEffectConfig);
+
+      // Get the processed background
+      processedBackground = this.p.get();
+    }
+
+    // Process foreground
+    let processedForeground = this.state.foregroundTexture;
+    if (foregroundEffect !== EffectType.OFF && this.state.foregroundTexture) {
+      this.p.clear();
+      this.p.image(
+        this.state.foregroundTexture,
+        -this.p.width / 2,
+        -this.p.height / 2
+      );
+
       const fgEffectConfig: EffectConfig = {
         type: foregroundEffect,
         layer: LayerType.FOREGROUND,
@@ -135,16 +195,29 @@ export class GenerationPipeline {
       };
       this.effects.apply(this.p, fgEffectConfig);
 
-      // Save processed foreground
-      foregroundTexture = this.p.get();
+      // Get the processed foreground
+      processedForeground = this.p.get();
     }
 
-    // Composite final image: background + foreground
+    // Update last effect states
+    this.state.lastBackgroundEffect = backgroundEffect;
+    this.state.lastForegroundEffect = foregroundEffect;
+
+    // Composite final image
     this.p.clear();
     this.p.push();
     this.p.translate(-this.p.width / 2, -this.p.height / 2);
-    this.p.image(backgroundTexture, 0, 0);
-    this.p.image(foregroundTexture, 0, 0);
+
+    // Draw background first
+    if (processedBackground) {
+      this.p.image(processedBackground, 0, 0);
+    }
+
+    // Draw foreground on top
+    if (processedForeground) {
+      this.p.image(processedForeground, 0, 0);
+    }
+
     this.p.pop();
   }
 

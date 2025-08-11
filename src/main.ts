@@ -17,6 +17,7 @@ let currentBackgroundEffect = EffectType.WAVES;
 let currentForegroundEffect = EffectType.DISPLACEMENT;
 let currentDebugMode = false;
 let paletteCanvas: p5;
+let lastAnimationFrame = 0;
 
 const sketch = (p: p5) => {
   p.setup = () => {
@@ -50,9 +51,31 @@ const sketch = (p: p5) => {
       generateArt();
     });
   };
+
+  p.draw = () => {
+    // Limit animation to reasonable frame rate (e.g., 30fps)
+    const now = p.millis();
+    if (hasAnimatedEffects() && now - lastAnimationFrame > 33) {
+      lastAnimationFrame = now;
+      // Only update animated effects, don't regenerate static content
+      updateEffectsOnly();
+    }
+  };
 };
 
+function hasAnimatedEffects(): boolean {
+  // Check if any effect that supports animation is currently active
+  return (
+    currentBackgroundEffect === EffectType.WAVES ||
+    currentBackgroundEffect === EffectType.DISPLACEMENT ||
+    currentForegroundEffect === EffectType.WAVES ||
+    currentForegroundEffect === EffectType.DISPLACEMENT ||
+    currentDebugMode
+  );
+}
+
 function generateArt() {
+  // Force regeneration of static content (colors, shapes, positions)
   pipeline.generate(
     currentPaletteSize as 5 | 7 | 9,
     currentElementCount,
@@ -62,6 +85,15 @@ function generateArt() {
     currentDebugMode
   );
   updatePaletteDisplay();
+}
+
+function updateEffectsOnly() {
+  // Only update animated effects, preserve static content
+  pipeline.updateAnimatedEffects(
+    currentBackgroundEffect,
+    currentForegroundEffect,
+    currentDebugMode
+  );
 }
 
 function updatePaletteDisplay() {
@@ -173,8 +205,8 @@ function setupEventListeners() {
         currentForegroundEffect = effect;
       }
 
-      // Auto-regenerate
-      generateArt();
+      // Only update effects, don't regenerate static content
+      updateEffectsOnly();
     });
   });
 
@@ -186,8 +218,8 @@ function setupEventListeners() {
     currentDebugMode = !currentDebugMode;
     target.classList.toggle('active', currentDebugMode);
 
-    // Auto-regenerate
-    generateArt();
+    // Only update effects, don't regenerate static content
+    updateEffectsOnly();
   });
 }
 
