@@ -16,6 +16,7 @@ let currentPalettePattern = PalettePattern.COMPLEMENTARY;
 let currentBackgroundEffect = EffectType.WAVES;
 let currentForegroundEffect = EffectType.DISPLACEMENT;
 let currentDebugMode = false;
+let animationEnabled = false; // Animation disabled by default
 let paletteCanvas: p5;
 let lastAnimationFrame = 0;
 
@@ -53,12 +54,15 @@ const sketch = (p: p5) => {
   };
 
   p.draw = () => {
-    // Limit animation to reasonable frame rate (e.g., 30fps)
-    const now = p.millis();
-    if (hasAnimatedEffects() && now - lastAnimationFrame > 33) {
-      lastAnimationFrame = now;
-      // Only update animated effects, don't regenerate static content
-      updateEffectsOnly();
+    // Only animate if animation is enabled and we have animated effects
+    if (animationEnabled && hasAnimatedEffects()) {
+      // Limit animation to reasonable frame rate (e.g., 30fps)
+      const now = p.millis();
+      if (now - lastAnimationFrame > 33) {
+        lastAnimationFrame = now;
+        // Only update animated effects, don't regenerate static content
+        updateEffectsOnly();
+      }
     }
   };
 };
@@ -115,6 +119,7 @@ function setupEventListeners() {
   const debugOption = document.querySelector(
     '[data-effect="debug_normal"]:not([data-layer])'
   );
+  const animationOptions = document.querySelectorAll('[data-animation]');
 
   generateBtn?.addEventListener('click', generateArt);
 
@@ -220,6 +225,28 @@ function setupEventListeners() {
 
     // Only update effects, don't regenerate static content
     updateEffectsOnly();
+  });
+
+  // Animation toggle event listeners
+  animationOptions.forEach((option) => {
+    option.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const animation = target.dataset.animation;
+
+      // Update active state
+      animationOptions.forEach((opt) => {
+        opt.classList.remove('active');
+      });
+      target.classList.add('active');
+
+      // Update animation state
+      animationEnabled = animation === 'on';
+
+      // If animation was just disabled, redraw static frame
+      if (!animationEnabled) {
+        updateEffectsOnly();
+      }
+    });
   });
 }
 
